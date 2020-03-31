@@ -91,7 +91,7 @@
 #define APP_TIMER_PRESCALER             0                                           /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE         4                                           /**< Size of timer operation queues. */
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(7.5, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
 #define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
 #define SLAVE_LATENCY                   0                                           /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
@@ -101,8 +101,8 @@
 
 #define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-#define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
-#define UART_RX_BUF_SIZE                256                                         /**< UART RX buffer size. */
+#define UART_TX_BUF_SIZE                1024                                         /**< UART TX buffer size. */
+#define UART_RX_BUF_SIZE                1024                                         /**< UART RX buffer size. */
 
 static ble_nus_t                        m_nus;                                      /**< Structure to identify the Nordic UART Service. */
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
@@ -285,7 +285,7 @@ static void sleep_mode_enter(void)
     uint32_t err_code = bsp_indication_set(BSP_INDICATE_IDLE);
     APP_ERROR_CHECK(err_code);
 
-    NRF_LOG_WARNING("sleep_mode_enter");
+    NRF_LOG_WARNING("sleep_mode_enter \r\n");
 
     return;
     // Prepare wakeup buttons.
@@ -314,9 +314,14 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
             APP_ERROR_CHECK(err_code);
             break;
-        case BLE_ADV_EVT_IDLE:
-            sleep_mode_enter();
-            break;
+        case BLE_ADV_EVT_IDLE: {
+
+            NRF_LOG_INFO("ADV resume \r\n");
+            err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
+            APP_ERROR_CHECK(err_code);
+
+            //sleep_mode_enter();
+        } break;
         default:
             break;
     }
@@ -485,15 +490,13 @@ void bsp_event_handler(bsp_event_t event)
     uint32_t err_code;
     switch (event)
     {
-        case BSP_EVENT_SLEEP:
+        case BSP_EVENT_KEY_0:
             sleep_mode_enter();
             break;
 
-        case BSP_EVENT_DISCONNECT:
-            err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-            if (err_code != NRF_ERROR_INVALID_STATE)
+        case BSP_EVENT_KEY_1:
             {
-                APP_ERROR_CHECK(err_code);
+            	sd_nvic_SystemReset();
             }
             break;
 
@@ -693,7 +696,7 @@ int main(void)
     advertising_init();
     conn_params_init();
 
-    NRF_LOG_INFO("UART Start! \r\n");
+    NRF_LOG_INFO("ADV Start! \r\n");
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 
