@@ -66,6 +66,10 @@
 #include "bsp.h"
 #include "bsp_btn_ble.h"
 
+
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                           /**< Include the service_changed characteristic. If not enabled, the server's database cannot be changed for the lifetime of the device. */
 
 #if (NRF_SD_BLE_API_VERSION == 3)
@@ -77,7 +81,7 @@
 #define CENTRAL_LINK_COUNT              0                                           /**< Number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT           1                                           /**< Number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
-#define DEVICE_NAME                     "Nordic_UART"                               /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "stravaAP"                               /**< Name of device. Will be included in the advertising data. */
 #define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
 
 #define APP_ADV_INTERVAL                64                                          /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
@@ -104,6 +108,24 @@ static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
 static ble_uuid_t                       m_adv_uuids[] = {{BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}};  /**< Universally unique service identifier. */
 
+
+void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t *p_file_name) {
+
+	if (error_code == NRF_SUCCESS) return;
+
+	NRF_LOG_ERROR("Erreur: 0x%x ligne %u file %s !! \n", (unsigned int)error_code, (unsigned int)line_num, (uint32_t) p_file_name);
+    NRF_LOG_FLUSH();
+
+}
+
+
+void app_error_handler_bare(uint32_t error_code) {
+
+	if (error_code == NRF_SUCCESS) return;
+
+	NRF_LOG_ERROR("Erreur bare: 0x%x \n", error_code);
+	NRF_LOG_FLUSH();
+}
 
 /**@brief Function for assert macro callback.
  *
@@ -164,6 +186,8 @@ static void gap_params_init(void)
 /**@snippet [Handling the data received over BLE] */
 static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 {
+	NRF_LOG_INFO("NUS recv %u \r\n", length);
+
     for (uint32_t i = 0; i < length; i++)
     {
         while (app_uart_put(p_data[i]) != NRF_SUCCESS);
@@ -255,13 +279,16 @@ static void sleep_mode_enter(void)
     uint32_t err_code = bsp_indication_set(BSP_INDICATE_IDLE);
     APP_ERROR_CHECK(err_code);
 
-    // Prepare wakeup buttons.
-    err_code = bsp_btn_ble_sleep_mode_prepare();
-    APP_ERROR_CHECK(err_code);
+    NRF_LOG_WARNING("sleep_mode_enter");
 
-    // Go to system-off mode (this function will not return; wakeup will cause a reset).
-    err_code = sd_power_system_off();
-    APP_ERROR_CHECK(err_code);
+    return;
+    // Prepare wakeup buttons.
+//    err_code = bsp_btn_ble_sleep_mode_prepare();
+//    APP_ERROR_CHECK(err_code);
+//
+//    // Go to system-off mode (this function will not return; wakeup will cause a reset).
+//    err_code = sd_power_system_off();
+//    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -540,7 +567,7 @@ static void uart_init(void)
         CTS_PIN_NUMBER,
         APP_UART_FLOW_CONTROL_DISABLED,
         false,
-        UART_BAUDRATE_BAUDRATE_Baud115200
+		UART_BAUDRATE_BAUDRATE_Baud115200,
     };
 
     APP_UART_FIFO_INIT( &comm_params,
@@ -619,6 +646,12 @@ int main(void)
     uint32_t err_code;
     bool erase_bonds;
 
+    // log init
+    err_code = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_INFO("Program start \r\n");
+
     // Initialize.
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
     uart_init();
@@ -630,13 +663,15 @@ int main(void)
     advertising_init();
     conn_params_init();
 
-    printf("\r\nUART Start!\r\n");
+    NRF_LOG_INFO("UART Start! \r\n");
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 
     // Enter main loop.
     for (;;)
     {
+    	while (NRF_LOG_PROCESS());
+
         power_manage();
     }
 }
