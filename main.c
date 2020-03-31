@@ -82,7 +82,7 @@
 #define CENTRAL_LINK_COUNT              0                                           /**< Number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT           1                                           /**< Number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
-#define DEVICE_NAME                     "stravaAP"                               /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "climberAP"                                 /**< Name of device. Will be included in the advertising data. */
 #define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
 
 #define APP_ADV_INTERVAL                64                                          /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
@@ -198,8 +198,8 @@ static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t lengt
     {
         while (app_uart_put(p_data[i]) != NRF_SUCCESS);
     }
-    while (app_uart_put('\r') != NRF_SUCCESS);
-    while (app_uart_put('\n') != NRF_SUCCESS);
+//    while (app_uart_put('\r') != NRF_SUCCESS);
+//    while (app_uart_put('\n') != NRF_SUCCESS);
 }
 /**@snippet [Handling the data received over BLE] */
 
@@ -536,6 +536,8 @@ void uart_event_handle(app_uart_evt_t * p_event)
 
             if ((data_array[index - 1] == '\n') || (index >= (BLE_NUS_MAX_DATA_LEN)))
             {
+            	NRF_LOG_INFO("Sending %u char to NUS \r\n", index);
+
                 err_code = ble_nus_string_send(&m_nus, data_array, index);
                 if (err_code != NRF_ERROR_INVALID_STATE)
                 {

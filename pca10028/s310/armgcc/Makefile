@@ -219,7 +219,7 @@ flash: $(OUTPUT_DIRECTORY)/nrf51422_xxac.hex
 
 # Flash softdevice
 flash_softdevice:
-	@echo Flashing: s130_nrf51_2.0.1_softdevice.hex
+	@echo Flashing: s310_nrf51422_3.0.0_softdevice.hex
 	nrfjprog --program $(SDK_ROOT)/components/softdevice/s310/hex/s310_nrf51422_3.0.0_softdevice.hex -f nrf51 --sectorerase 
 	nrfjprog --reset -f nrf51
 
