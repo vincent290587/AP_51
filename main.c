@@ -198,8 +198,7 @@ static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t lengt
     {
         while (app_uart_put(p_data[i]) != NRF_SUCCESS);
     }
-//    while (app_uart_put('\r') != NRF_SUCCESS);
-//    while (app_uart_put('\n') != NRF_SUCCESS);
+
 }
 /**@snippet [Handling the data received over BLE] */
 
@@ -343,6 +342,9 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             APP_ERROR_CHECK(err_code);
             NRF_LOG_INFO("Connected \r\n");
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+
+            err_code = app_uart_flush();
+            APP_ERROR_CHECK(err_code);
             break; // BLE_GAP_EVT_CONNECTED
 
         case BLE_GAP_EVT_DISCONNECTED:
