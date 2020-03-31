@@ -24,6 +24,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/hardfault/hardfault_implementation.c \
   $(SDK_ROOT)/components/libraries/util/nrf_assert.c \
   $(SDK_ROOT)/components/libraries/uart/retarget.c \
+  $(SDK_ROOT)/components/drivers_nrf/wdt/nrf_drv_wdt.c \
   $(SDK_ROOT)/components/libraries/util/sdk_errors.c \
   $(SDK_ROOT)/components/boards/boards.c \
   $(SDK_ROOT)/components/drivers_nrf/clock/nrf_drv_clock.c \

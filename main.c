@@ -53,6 +53,7 @@
 #include <string.h>
 #include "nordic_common.h"
 #include "nrf.h"
+#include "nrf_drv_wdt.h"
 #include "ble_hci.h"
 #include "ble_advdata.h"
 #include "ble_advertising.h"
@@ -108,6 +109,9 @@ static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
 static ble_uuid_t                       m_adv_uuids[] = {{BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}};  /**< Universally unique service identifier. */
 
+#if WDT_ENABLED
+static nrf_drv_wdt_channel_id m_channel_id;
+#endif
 
 void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t *p_file_name) {
 
@@ -187,6 +191,8 @@ static void gap_params_init(void)
 static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 {
 	NRF_LOG_INFO("NUS recv %u \r\n", length);
+
+	bsp_board_led_invert(2);
 
     for (uint32_t i = 0; i < length; i++)
     {
@@ -565,7 +571,7 @@ static void uart_init(void)
         TX_PIN_NUMBER,
         RTS_PIN_NUMBER,
         CTS_PIN_NUMBER,
-        APP_UART_FLOW_CONTROL_DISABLED,
+        APP_UART_FLOW_CONTROL_ENABLED,
         false,
 		UART_BAUDRATE_BAUDRATE_Baud115200,
     };
@@ -629,6 +635,16 @@ static void buttons_leds_init(bool * p_erase_bonds)
     *p_erase_bonds = (startup_event == BSP_EVENT_CLEAR_BONDING_DATA);
 }
 
+#if WDT_ENABLED
+/**
+ * @brief WDT events handler.
+ */
+static void wdt_event_handler(void)
+{
+    // empty function
+}
+#endif
+
 
 /**@brief Function for placing the application in low power state while waiting for events.
  */
@@ -645,6 +661,16 @@ int main(void)
 {
     uint32_t err_code;
     bool erase_bonds;
+
+    //Configure WDT.
+#if WDT_ENABLED
+    nrf_drv_wdt_config_t config = NRF_DRV_WDT_DEAFULT_CONFIG;
+    err_code = nrf_drv_wdt_init(&config, wdt_event_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrf_drv_wdt_channel_alloc(&m_channel_id);
+    APP_ERROR_CHECK(err_code);
+    nrf_drv_wdt_enable();
+#endif
 
     // log init
     err_code = NRF_LOG_INIT(NULL);
@@ -673,6 +699,11 @@ int main(void)
     	while (NRF_LOG_PROCESS());
 
         power_manage();
+
+		// feed watchdog
+#if WDT_ENABLED
+    	nrf_drv_wdt_channel_feed(m_channel_id);
+#endif
     }
 }
 

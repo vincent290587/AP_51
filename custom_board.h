@@ -49,8 +49,8 @@ extern "C" {
 // LEDs definitions for PCA10028
 #define LEDS_NUMBER    3
 
-#define LED_1          1
-#define LED_2          2
+#define LED_1          2
+#define LED_2          1
 #define LED_3          3
 #define LED_START      LED_1
 #define LED_STOP       LED_3
@@ -83,8 +83,8 @@ extern "C" {
 
 #define RX_PIN_NUMBER  23
 #define TX_PIN_NUMBER  30
-#define CTS_PIN_NUMBER 31
-#define RTS_PIN_NUMBER 24
+#define CTS_PIN_NUMBER 24
+#define RTS_PIN_NUMBER 31
 #define HWFC           true
 
 #define SPIS_MISO_PIN  28    // SPI MISO signal.
